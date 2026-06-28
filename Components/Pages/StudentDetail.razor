@@ -1,0 +1,97 @@
+@* ============================================================
+   StudentDetail.razor — Detail / View Page
+   Route: /students/{Id:int}
+
+   Concepts demonstrated:
+     • Routing with parameters — {Id:int} in the @page route
+     • [Parameter]             — Id comes from the URL
+     • Conditional rendering   — different UI when student not found
+     • Events                  — button click handler
+   ============================================================ *@
+
+@page "/students/{Id:int}"
+@rendermode InteractiveServer
+
+@inject StudentService StudentService
+@inject NavigationManager Nav
+
+<PageTitle>Student Detail</PageTitle>
+
+<div class="container py-4">
+    @* Conditional rendering: show a "not found" message if the ID is invalid *@
+    @if (_student is null)
+    {
+        <div class="alert alert-warning">
+            Student with ID @Id was not found.
+            <a href="/students" class="alert-link">Back to list</a>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm" style="max-width: 480px;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">@_student.FullName</h4>
+
+                @* Conditional rendering: badge reflects enrollment status *@
+                @if (_student.IsEnrolled)
+                {
+                    <span class="badge bg-success fs-6">Enrolled</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary fs-6">Not Enrolled</span>
+                }
+            </div>
+
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">ID</dt>
+                    <dd class="col-sm-8">@_student.Id</dd>
+
+                    <dt class="col-sm-4">First Name</dt>
+                    <dd class="col-sm-8">@_student.FirstName</dd>
+
+                    <dt class="col-sm-4">Last Name</dt>
+                    <dd class="col-sm-8">@_student.LastName</dd>
+
+                    <dt class="col-sm-4">Grade</dt>
+                    <dd class="col-sm-8">@_student.Grade</dd>
+
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">@_student.Email</dd>
+                </dl>
+            </div>
+
+            <div class="card-footer d-flex gap-2">
+                <a href="/students/@_student.Id/edit" class="btn btn-primary">Edit</a>
+
+                @* Event: clicking Delete calls HandleDelete *@
+                <button class="btn btn-danger" @onclick="HandleDelete">Delete</button>
+                <a href="/students" class="btn btn-outline-secondary">Back</a>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    // [Parameter] picks up the {Id} segment from the URL automatically
+    [Parameter]
+    public int Id { get; set; }
+
+    private Student? _student;
+
+    // OnParametersSet runs whenever the URL parameter changes
+    // (handles navigating from /students/1 to /students/2 without full reload)
+    protected override void OnParametersSet()
+    {
+        _student = StudentService.GetById(Id);
+    }
+
+    private void HandleDelete()
+    {
+        if (_student is null) return;
+        StudentService.Delete(_student.Id);
+        // Navigate back to the list after deletion
+        Nav.NavigateTo("/students");
+    }
+}

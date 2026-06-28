@@ -1,0 +1,122 @@
+@* ============================================================
+   Students.razor — Student List Page
+   Route: /students
+
+   Concepts demonstrated:
+     • Routing           — @page "/students"
+     • Dependency Injection — @inject pulls in the StudentService
+     • Lists             — @foreach loops over the student list
+     • Conditional rendering — @if checks enrollment filter and empty state
+     • Events            — OnDelete EventCallback from StudentCard
+     • Two-way binding   — @bind on a checkbox/select to filter the list
+   ============================================================ *@
+
+@page "/students"
+@rendermode InteractiveServer
+
+@inject StudentService StudentService
+
+<PageTitle>Students</PageTitle>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Student List</h2>
+        <a href="/students/new" class="btn btn-success">+ Add Student</a>
+    </div>
+
+    @* ── Filter controls ── *@
+    <div class="mb-3 d-flex gap-3 align-items-center">
+        <label class="form-label mb-0 fw-semibold">Filter:</label>
+
+        @* @bind is two-way binding: when the user changes the select,
+           _filter is updated automatically and the UI re-renders *@
+        <select class="form-select w-auto" @bind="_filter">
+            <option value="all">All Students</option>
+            <option value="enrolled">Enrolled Only</option>
+            <option value="not-enrolled">Not Enrolled Only</option>
+        </select>
+
+        @* @bind on an input — search text updates _search on each change *@
+        <input class="form-control w-auto" placeholder="Search by name…"
+               @bind="_search" @bind:event="oninput" />
+    </div>
+
+    @* ── Conditional: show a message when the list is empty ── *@
+    @if (!FilteredStudents.Any())
+    {
+        <div class="alert alert-info">No students match your filter.</div>
+    }
+    else
+    {
+        @* ── Lists: @foreach renders one StudentCard per student ── *@
+        @foreach (var student in FilteredStudents)
+        {
+            @* StudentCard is a child component.
+               Student= passes data down; OnDelete= wires up the event callback. *@
+            <StudentCard Student="student" OnDelete="HandleDelete" />
+        }
+    }
+</div>
+
+@* ── Toast notification (conditional rendering) ── *@
+@if (_showToast)
+{
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+        <div class="toast show text-bg-success">
+            <div class="toast-body">@_toastMessage</div>
+        </div>
+    </div>
+}
+
+@code {
+    // Full student list loaded from the service
+    private List<Student> _students = new();
+
+    // Bound to the filter <select> — drives conditional list rendering
+    private string _filter = "all";
+
+    // Bound to the search <input>
+    private string _search = string.Empty;
+
+    // Controls toast visibility — demonstrates conditional rendering
+    private bool _showToast;
+    private string _toastMessage = string.Empty;
+
+    // Computed property: applies both the filter and the search
+    private IEnumerable<Student> FilteredStudents =>
+        _students
+            .Where(s => _filter switch
+            {
+                "enrolled"     => s.IsEnrolled,
+                "not-enrolled" => !s.IsEnrolled,
+                _              => true
+            })
+            .Where(s => string.IsNullOrWhiteSpace(_search) ||
+                        s.FullName.Contains(_search, StringComparison.OrdinalIgnoreCase));
+
+    // OnInitialized runs once when the component first loads
+    protected override void OnInitialized()
+    {
+        LoadStudents();
+    }
+
+    private void LoadStudents() => _students = StudentService.GetAll();
+
+    // Handles the OnDelete event raised by StudentCard
+    private async Task HandleDelete(int studentId)
+    {
+        StudentService.Delete(studentId);
+        LoadStudents();      // refresh the list
+        await ShowToast("Student deleted successfully.");
+    }
+
+    // Show a temporary toast notification for 2 seconds
+    private async Task ShowToast(string message)
+    {
+        _toastMessage = message;
+        _showToast = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        _showToast = false;
+    }
+}

@@ -1,0 +1,56 @@
+@* ============================================================
+   StudentCard.razor — Shared / Reusable Child Component
+   
+   Concepts demonstrated:
+     • [Parameter]       — parent passes data INTO this component
+     • EventCallback     — child fires an event back TO the parent
+     • Conditional HTML  — @if block changes badge color/text
+   ============================================================ *@
+
+<div class="card mb-3 shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5 class="card-title mb-1">@Student.FullName</h5>
+                <p class="card-text text-muted mb-1">Grade @Student.Grade &nbsp;|&nbsp; @Student.Email</p>
+            </div>
+
+            @* Conditional rendering: show different badge depending on enrollment status *@
+            @if (Student.IsEnrolled)
+            {
+                <span class="badge bg-success">Enrolled</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">Not Enrolled</span>
+            }
+        </div>
+
+        <div class="mt-2 d-flex gap-2">
+            @* Navigates to the detail page — routing with a URL parameter *@
+            <a href="/students/@Student.Id" class="btn btn-sm btn-outline-primary">View</a>
+            <a href="/students/@Student.Id/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+
+            @* EventCallback: clicking Delete fires the OnDelete event in the parent *@
+            <button class="btn btn-sm btn-outline-danger" @onclick="HandleDelete">Delete</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    // [Parameter] marks a property that the parent component can set
+    [Parameter, EditorRequired]
+    public Student Student { get; set; } = default!;
+
+    // EventCallback lets the child tell the parent "something happened"
+    // The parent decides what to do (e.g., refresh the list)
+    [Parameter]
+    public EventCallback<int> OnDelete { get; set; }
+
+    // Called when the Delete button is clicked
+    private async Task HandleDelete()
+    {
+        // Invoke the parent's callback, passing the student's ID
+        await OnDelete.InvokeAsync(Student.Id);
+    }
+}
