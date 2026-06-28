@@ -1,0 +1,107 @@
+@* Home.razor — The landing page of StudentBasics.
+   CONCEPT: Razor Pages & Static Rendering
+   - @page "/" makes this the root route of the application.
+   - Pages that don't need interactivity (no button clicks, no user input)
+     can be rendered as plain HTML — no @rendermode directive needed.
+*@
+
+@page "/"
+
+<PageTitle>Home – StudentBasics</PageTitle>
+
+<h1>Welcome to StudentBasics 🎓</h1>
+<p class="lead">
+    A beginner-friendly Blazor app that walks you through the core concepts of
+    building interactive web UIs with C# and Razor syntax.
+</p>
+
+<hr />
+
+<h2>What you will learn</h2>
+
+<div class="row row-cols-1 row-cols-md-2 g-4 mt-1">
+
+    @* Each card below describes one Blazor concept demonstrated in this app. *@
+
+    <div class="col">
+        <div class="card h-100 border-primary">
+            <div class="card-header bg-primary text-white">📄 Razor Syntax</div>
+            <div class="card-body">
+                <p class="card-text">
+                    Razor lets you mix C# directly into your HTML using the <code>@@</code> symbol.
+                    For example, <code>@@currentCount</code> renders the value of a C# variable
+                    right inside the page.
+                </p>
+                <a href="/counter" class="btn btn-outline-primary btn-sm">See it on the Counter page →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100 border-success">
+            <div class="card-header bg-success text-white">🖱️ Event Handling</div>
+            <div class="card-body">
+                <p class="card-text">
+                    Use <code>@@onclick</code>, <code>@@oninput</code>, and other Blazor event
+                    directives to call C# methods when users interact with the page.
+                </p>
+                <a href="/counter" class="btn btn-outline-success btn-sm">See it on the Counter page →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100 border-warning">
+            <div class="card-header bg-warning text-dark">🔗 Data Binding</div>
+            <div class="card-body">
+                <p class="card-text">
+                    <code>@@bind</code> creates a two-way link between a C# variable and an
+                    input element — when the user types, the variable updates automatically.
+                </p>
+                <a href="/students" class="btn btn-outline-warning btn-sm">See it on the Student List →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100 border-info">
+            <div class="card-header bg-info text-dark">✅ Forms & Validation</div>
+            <div class="card-body">
+                <p class="card-text">
+                    Blazor's <code>EditForm</code> component works with data annotations to
+                    validate user input before it is submitted, showing helpful error messages.
+                </p>
+                <a href="/add-student" class="btn btn-outline-info btn-sm">See it on Add Student →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100 border-secondary">
+            <div class="card-header bg-secondary text-white">🔀 Conditional Rendering</div>
+            <div class="card-body">
+                <p class="card-text">
+                    Use <code>@@if</code>, <code>@@else</code>, and <code>@@foreach</code> inside
+                    Razor to show or hide content based on data — just like normal C# control flow.
+                </p>
+                <a href="/students" class="btn btn-outline-secondary btn-sm">See it on the Student List →</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100 border-dark">
+            <div class="card-header bg-dark text-white">🧩 Components & Parameters</div>
+            <div class="card-body">
+                <p class="card-text">
+                    Break your UI into small, reusable components. Pass data into them using
+                    <code>[Parameter]</code> properties and communicate back to the parent with
+                    <code>EventCallback</code>.
+                </p>
+                <a href="/students" class="btn btn-outline-dark btn-sm">See it on the Student List →</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+

@@ -1,0 +1,76 @@
+@* Counter.razor — Demonstrates event handling and component state.
+   CONCEPT: @rendermode InteractiveServer
+   - By default, Blazor pages are rendered as static HTML on the server.
+   - Adding @rendermode InteractiveServer enables a SignalR connection so that
+     button clicks and C# event handlers work in real time in the browser.
+   - Without this directive, the button would not respond to clicks.
+*@
+
+@page "/counter"
+@rendermode InteractiveServer
+
+<PageTitle>Counter – StudentBasics</PageTitle>
+
+<h1>Counter 🔢</h1>
+<p>This page demonstrates <strong>event handling</strong> and <strong>component state</strong>.</p>
+<hr />
+
+@* CONCEPT: Razor expressions — @currentCount embeds the C# variable value into the HTML *@
+<p class="fs-4">Current count: <strong>@currentCount</strong></p>
+
+@* Show a congratulations message when count reaches a multiple of 10.
+   CONCEPT: Conditional Rendering — @if renders markup only when the condition is true *@
+@if (currentCount > 0 && currentCount % 10 == 0)
+{
+    <div class="alert alert-success">🎉 You hit @currentCount — great job!</div>
+}
+
+@* Show a warning once the count goes negative.
+   CONCEPT: Conditional Rendering with @else *@
+@if (currentCount < 0)
+{
+    <div class="alert alert-warning">⚠️ The count is negative!</div>
+}
+
+<div class="d-flex gap-2 mt-3">
+    @* CONCEPT: Event Handling — @onclick="IncrementCount" calls the C# method below
+       when the user clicks this button. *@
+    <button class="btn btn-primary" @onclick="IncrementCount">+ Increment</button>
+
+    @* Decrement button — same pattern, different method *@
+    <button class="btn btn-secondary" @onclick="DecrementCount">− Decrement</button>
+
+    @* Reset button — demonstrates calling a lambda directly in the @onclick *@
+    <button class="btn btn-outline-danger" @onclick="() => currentCount = 0">↺ Reset</button>
+</div>
+
+@* CONCEPT: Step input — demonstrates two-way data binding with @bind.
+   Whatever the user types in the box is immediately reflected in the 'step' variable. *@
+<div class="mt-4">
+    <label class="form-label">Step size (change how much each click adds/subtracts):</label>
+    <input type="number" class="form-control w-25" @bind="step" />
+</div>
+
+@code {
+    // 'currentCount' is the component's STATE.
+    // Blazor re-renders the component automatically whenever state changes.
+    private int currentCount = 0;
+
+    // 'step' controls how much each button click changes the count.
+    // It is linked to the <input> element via @bind above.
+    private int step = 1;
+
+    // Event handler for the Increment button.
+    // Blazor calls this method every time the button is clicked.
+    private void IncrementCount()
+    {
+        currentCount += step;
+    }
+
+    // Event handler for the Decrement button.
+    private void DecrementCount()
+    {
+        currentCount -= step;
+    }
+}
+

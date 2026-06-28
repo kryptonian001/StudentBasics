@@ -1,0 +1,108 @@
+@* StudentList.razor — Displays all students with live search and delete support.
+   CONCEPTS DEMONSTRATED:
+   - Dependency Injection (@inject) — pull a service into the component
+   - Data Binding (@bind) — two-way link between the search box and a C# variable
+   - Conditional Rendering (@if / @else / @foreach) — show/hide content based on data
+   - Components & Parameters — the <StudentCard> component receives a Student object
+   - Event Callbacks — StudentCard calls back here when the user removes a student
+   - OnInitializedAsync — lifecycle hook that runs when the component first loads
+*@
+
+@page "/students"
+@rendermode InteractiveServer
+
+@* CONCEPT: Dependency Injection
+   @inject StudentService StudentSvc tells Blazor to provide a StudentService instance.
+   The instance is the same one shared across all pages in this browser session,
+   so students added on the Add Student page appear here instantly. *@
+@inject StudentBasics.Services.StudentService StudentSvc
+
+<PageTitle>Student List – StudentBasics</PageTitle>
+
+<h1>Student List 📋</h1>
+<p>This page demonstrates <strong>data binding</strong>, <strong>conditional rendering</strong>, and <strong>reusable components</strong>.</p>
+<hr />
+
+@* CONCEPT: Data Binding
+   @bind="searchText" links the input field to the 'searchText' variable.
+   Every keystroke updates the variable, and the displayed list is filtered live
+   because Blazor re-renders the page whenever state changes.
+   We use @bind:event="oninput" so the filter applies after every keypress, not just
+   when the user leaves the field. *@
+<div class="mb-3">
+    <label class="form-label fw-semibold">🔍 Search students:</label>
+    <input class="form-control"
+           placeholder="Type a name or subject…"
+           @bind="searchText"
+           @bind:event="oninput" />
+</div>
+
+<div class="mb-3">
+    <a href="/add-student" class="btn btn-success">+ Add New Student</a>
+</div>
+
+@* CONCEPT: Conditional Rendering — @if checks whether the filtered list is empty *@
+@if (FilteredStudents.Count == 0)
+{
+    @* Show a friendly message when there are no results. *@
+    @if (string.IsNullOrWhiteSpace(searchText))
+    {
+        <div class="alert alert-info">No students yet. <a href="/add-student">Add one!</a></div>
+    }
+    else
+    {
+        <div class="alert alert-warning">No students match "<em>@searchText</em>".</div>
+    }
+}
+else
+{
+    @* CONCEPT: Conditional Rendering with @foreach — loop over the filtered list *@
+    <p class="text-muted">Showing @FilteredStudents.Count student(s).</p>
+
+    @foreach (var student in FilteredStudents)
+    {
+        @* CONCEPT: Reusable Component with Parameters
+           <StudentCard> is a component defined in Components/Shared/StudentCard.razor.
+           We pass data TO it via the Student parameter.
+           We pass an EventCallback (OnDelete) so it can notify us when the user
+           clicks the Remove button inside the card. *@
+        <StudentCard Student="student" OnDelete="RemoveStudent" />
+    }
+}
+
+@code {
+    // All students loaded from the service.
+    private List<StudentBasics.Models.Student> allStudents = [];
+
+    // CONCEPT: Two-way binding target — @bind="searchText" in the input above
+    // reads from and writes to this variable.
+    private string searchText = string.Empty;
+
+    // Computed property: filters the full list whenever searchText changes.
+    // Because Blazor re-renders on every state change, this always stays up to date.
+    private List<StudentBasics.Models.Student> FilteredStudents =>
+        allStudents
+            .Where(s =>
+                string.IsNullOrWhiteSpace(searchText) ||
+                s.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                s.Subject.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+    // CONCEPT: Lifecycle hook — OnInitializedAsync runs once when the component loads.
+    // This is where you fetch initial data (from a service, API, database, etc.).
+    protected override Task OnInitializedAsync()
+    {
+        allStudents = StudentSvc.GetAll();
+        return Task.CompletedTask;
+    }
+
+    // Called by StudentCard's OnDelete EventCallback when a Remove button is clicked.
+    // CONCEPT: EventCallback — the child component invokes this method and passes
+    // the student's ID back up to the parent so we can decide what to do.
+    private void RemoveStudent(int id)
+    {
+        StudentSvc.Remove(id);
+        // Reload the list to reflect the deletion.
+        allStudents = StudentSvc.GetAll();
+    }
+}
