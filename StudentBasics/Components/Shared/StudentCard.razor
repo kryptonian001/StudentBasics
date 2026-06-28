@@ -1,0 +1,51 @@
+@* StudentCard.razor — A reusable component that displays one student's details.
+   CONCEPT: Components & Parameters
+   - A component is a self-contained piece of UI defined in a .razor file.
+   - [Parameter] properties let a parent component pass data into this component.
+   - Here, the parent (StudentList page) passes a Student object and an event callback.
+*@
+
+@using StudentBasics.Models
+
+<div class="card mb-3 shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title">@Student.Name</h5>
+        <p class="card-text">
+            <strong>Age:</strong> @Student.Age &nbsp;|&nbsp;
+            <strong>Subject:</strong> @Student.Subject &nbsp;|&nbsp;
+            <strong>Grade:</strong>
+            @* CONCEPT: Conditional Rendering — change badge colour based on grade *@
+            <span class="badge @GetGradeBadgeClass()">@Student.Grade</span>
+        </p>
+        @* CONCEPT: Event Handling — @onclick wires up the button click to a C# method *@
+        <button class="btn btn-sm btn-danger" @onclick="HandleDelete">Remove</button>
+    </div>
+</div>
+
+@code {
+    // [Parameter] makes this property settable by the parent component.
+    [Parameter, EditorRequired]
+    public Student Student { get; set; } = new();
+
+    // EventCallback lets the child notify the parent when something happens.
+    // The parent decides what to do (here: remove the student from the list).
+    [Parameter]
+    public EventCallback<int> OnDelete { get; set; }
+
+    // Called when the Remove button is clicked.
+    private async Task HandleDelete()
+    {
+        // Invoke the parent's callback, passing the student's ID.
+        await OnDelete.InvokeAsync(Student.Id);
+    }
+
+    // Returns a Bootstrap CSS class based on the first letter of the grade.
+    // This is a helper method used inside the Razor markup above.
+    private string GetGradeBadgeClass() => Student.Grade switch
+    {
+        var g when g.StartsWith("A") => "bg-success",
+        var g when g.StartsWith("B") => "bg-primary",
+        var g when g.StartsWith("C") => "bg-warning text-dark",
+        _ => "bg-danger"
+    };
+}

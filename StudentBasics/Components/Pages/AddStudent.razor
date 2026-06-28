@@ -1,0 +1,150 @@
+@* AddStudent.razor — A form for adding a new student to the in-memory list.
+   CONCEPTS DEMONSTRATED:
+   - EditForm — Blazor's built-in form component
+   - DataAnnotationsValidator — automatically reads [Required], [Range], etc.
+   - ValidationSummary / ValidationMessage — displays validation errors
+   - Two-way data binding with @bind inside form fields
+   - NavigationManager — programmatic navigation after a successful submit
+   - Conditional Rendering — show a success banner before redirecting
+*@
+
+@page "/add-student"
+@rendermode InteractiveServer
+
+@inject StudentBasics.Services.StudentService StudentSvc
+
+@* CONCEPT: NavigationManager — a built-in Blazor service that lets you
+   navigate to another page from C# code (e.g., after a successful form submit). *@
+@inject NavigationManager Nav
+
+@using System.ComponentModel.DataAnnotations
+@using StudentBasics.Models
+
+<PageTitle>Add Student – StudentBasics</PageTitle>
+
+<h1>Add Student ➕</h1>
+<p>This page demonstrates <strong>forms</strong>, <strong>data binding</strong>, and <strong>validation</strong>.</p>
+<hr />
+
+@* CONCEPT: Conditional Rendering — show a success alert while the redirect countdown runs *@
+@if (submitted)
+{
+    <div class="alert alert-success">
+        ✅ <strong>@newStudent.Name</strong> was added successfully! Redirecting to the student list…
+    </div>
+}
+
+@* CONCEPT: EditForm
+   - Model="newStudent" binds the form to a C# object.
+   - OnValidSubmit="HandleValidSubmit" is called ONLY when all validations pass.
+   - The form will NOT submit if any [Required] or [Range] rule is violated. *@
+<EditForm Model="newStudent" OnValidSubmit="HandleValidSubmit">
+
+    @* CONCEPT: DataAnnotationsValidator
+       Reads the [Required], [Range], [StringLength] attributes on the model
+       and triggers error messages automatically when the form is submitted. *@
+    <DataAnnotationsValidator />
+
+    @* ValidationSummary shows all current errors at the top of the form. *@
+    <ValidationSummary class="text-danger" />
+
+    <div class="mb-3">
+        <label class="form-label">Full Name <span class="text-danger">*</span></label>
+        @* CONCEPT: Two-way Data Binding inside EditForm
+           @bind-Value links the input to newStudent.Name.
+           Blazor also uses this binding to show field-level validation messages. *@
+        <InputText class="form-control" @bind-Value="newStudent.Name" placeholder="e.g. Jane Doe" />
+        @* ValidationMessage displays the error for a specific field only. *@
+        <ValidationMessage For="() => newStudent.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Age <span class="text-danger">*</span></label>
+        <InputNumber class="form-control" @bind-Value="newStudent.Age" />
+        <ValidationMessage For="() => newStudent.Age" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Subject <span class="text-danger">*</span></label>
+        <InputText class="form-control" @bind-Value="newStudent.Subject" placeholder="e.g. Mathematics" />
+        <ValidationMessage For="() => newStudent.Subject" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Grade <span class="text-danger">*</span></label>
+        @* InputSelect renders a <select> dropdown and binds it to newStudent.Grade *@
+        <InputSelect class="form-select" @bind-Value="newStudent.Grade">
+            <option value="">-- Select a grade --</option>
+            <option value="A+">A+</option>
+            <option value="A">A</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B">B</option>
+            <option value="B-">B-</option>
+            <option value="C+">C+</option>
+            <option value="C">C</option>
+            <option value="C-">C-</option>
+            <option value="D">D</option>
+            <option value="F">F</option>
+        </InputSelect>
+        <ValidationMessage For="() => newStudent.Grade" />
+    </div>
+
+    <div class="d-flex gap-2">
+        @* The submit button triggers OnValidSubmit only if all validations pass. *@
+        <button type="submit" class="btn btn-primary">💾 Save Student</button>
+        <a href="/students" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+
+</EditForm>
+
+@code {
+    // The model that is bound to the form above.
+    // All [Required] / [Range] attributes on this class are automatically validated.
+    private StudentFormModel newStudent = new();
+
+    // Flag used for the conditional success banner.
+    private bool submitted = false;
+
+    // Called by EditForm's OnValidSubmit — only runs when the form is valid.
+    private async Task HandleValidSubmit()
+    {
+        // Map the form model to the domain model.
+        var student = new Student
+        {
+            Name    = newStudent.Name,
+            Age     = newStudent.Age,
+            Subject = newStudent.Subject,
+            Grade   = newStudent.Grade
+        };
+
+        StudentSvc.Add(student);
+
+        // Show the success banner briefly before navigating away.
+        submitted = true;
+        StateHasChanged(); // Tell Blazor to re-render so the banner appears immediately.
+        await Task.Delay(1500);
+
+        // CONCEPT: NavigationManager — navigate programmatically to the student list.
+        Nav.NavigateTo("/students");
+    }
+
+    // A separate form-model class lets us add validation attributes without
+    // modifying the core Student model.
+    private class StudentFormModel
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        [StringLength(100, MinimumLength = 2, ErrorMessage = "Name must be between 2 and 100 characters.")]
+        public string Name { get; set; } = string.Empty;
+
+        [Range(5, 100, ErrorMessage = "Age must be between 5 and 100.")]
+        public int Age { get; set; }
+
+        [Required(ErrorMessage = "Subject is required.")]
+        [StringLength(50, MinimumLength = 2, ErrorMessage = "Subject must be between 2 and 50 characters.")]
+        public string Subject { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please select a grade.")]
+        public string Grade { get; set; } = string.Empty;
+    }
+}
