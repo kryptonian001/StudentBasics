@@ -1,0 +1,30 @@
+@* ============================================================
+   Home.razor — Welcome / Landing Page
+   Route: /
+   ============================================================ *@
+
+@page "/"
+
+<PageTitle>StudentBasics — Home</PageTitle>
+
+<div class="container py-4">
+    <h1 class="display-5 fw-bold">Welcome to StudentBasics 👋</h1>
+    <p class="lead text-muted">
+        A beginner Blazor app that demonstrates core concepts through a simple student management system.
+    </p>
+
+    <hr />
+
+    <h4 class="mt-4">What you'll learn from this app:</h4>
+    <ul class="list-group list-group-flush mb-4">
+        <li class="list-group-item"><strong>Routing</strong> — @@page directives and URL parameters (e.g., /students/3)</li>
+        <li class="list-group-item"><strong>Components</strong> — reusable <code>StudentCard</code> child component with [Parameter]</li>
+        <li class="list-group-item"><strong>Events</strong> — EventCallback lets child components talk to their parent</li>
+        <li class="list-group-item"><strong>Data binding</strong> — @@bind for two-way binding on inputs</li>
+        <li class="list-group-item"><strong>Lists</strong> — @@foreach to render a list of students</li>
+        <li class="list-group-item"><strong>Forms &amp; Validation</strong> — EditForm + DataAnnotations + ValidationMessage</li>
+        <li class="list-group-item"><strong>Conditional rendering</strong> — @@if / @@else to show different UI based on state</li>
+    </ul>
+
+    <a href="/students" class="btn btn-primary btn-lg">View Students →</a>
+</div>

@@ -1,0 +1,157 @@
+@* ============================================================
+   StudentForm.razor — Add / Edit Student Page
+   Routes:
+     /students/new        → create a new student
+     /students/{Id:int}/edit → edit an existing student
+
+   Concepts demonstrated:
+     • Routing with optional parameter — {Id:int} is optional
+     • EditForm                        — Blazor's built-in form component
+     • Data binding                    — @bind on each field inside the form
+     • Validation                      — DataAnnotationsValidator + ValidationMessage
+     • Conditional rendering           — Add vs Edit title/button, success message
+     • Events                          — OnValidSubmit fires only when form is valid
+   ============================================================ *@
+
+@page "/students/new"
+@page "/students/{Id:int}/edit"
+@rendermode InteractiveServer
+
+@inject StudentService StudentService
+@inject NavigationManager Nav
+
+<PageTitle>@(_isEdit ? "Edit Student" : "Add Student")</PageTitle>
+
+<div class="container py-4" style="max-width: 520px;">
+
+    @* Conditional rendering: title changes based on whether we're adding or editing *@
+    <h2 class="mb-4">@(_isEdit ? "✏️ Edit Student" : "➕ Add New Student")</h2>
+
+    @* EditForm wraps the form and handles submission + validation.
+       Model= binds the form to our Student object.
+       OnValidSubmit= fires only when all DataAnnotation rules pass. *@
+    <EditForm Model="_student" OnValidSubmit="HandleSubmit" FormName="StudentForm">
+
+        @* DataAnnotationsValidator reads [Required], [Range], [EmailAddress] etc.
+           from the Student model and validates them automatically. *@
+        <DataAnnotationsValidator />
+
+        @* ValidationSummary shows ALL validation errors at the top of the form *@
+        <ValidationSummary class="text-danger" />
+
+        @* ── First Name ── *@
+        <div class="mb-3">
+            <label class="form-label fw-semibold" for="firstName">First Name</label>
+            @* @bind="…" is two-way data binding:
+               reading the property populates the input,
+               and typing updates the property in real time *@
+            <InputText id="firstName" class="form-control" @bind-Value="_student.FirstName" placeholder="e.g. Alice" />
+            @* ValidationMessage shows the error for only this specific field *@
+            <ValidationMessage For="@(() => _student.FirstName)" class="text-danger small" />
+        </div>
+
+        @* ── Last Name ── *@
+        <div class="mb-3">
+            <label class="form-label fw-semibold" for="lastName">Last Name</label>
+            <InputText id="lastName" class="form-control" @bind-Value="_student.LastName" placeholder="e.g. Johnson" />
+            <ValidationMessage For="@(() => _student.LastName)" class="text-danger small" />
+        </div>
+
+        @* ── Grade ── *@
+        <div class="mb-3">
+            <label class="form-label fw-semibold" for="grade">Grade (1–12)</label>
+            @* InputNumber provides a numeric input bound to an int property *@
+            <InputNumber id="grade" class="form-control" @bind-Value="_student.Grade" />
+            <ValidationMessage For="@(() => _student.Grade)" class="text-danger small" />
+        </div>
+
+        @* ── Email ── *@
+        <div class="mb-3">
+            <label class="form-label fw-semibold" for="email">Email</label>
+            <InputText id="email" class="form-control" @bind-Value="_student.Email" placeholder="e.g. alice@school.edu" />
+            <ValidationMessage For="@(() => _student.Email)" class="text-danger small" />
+        </div>
+
+        @* ── Enrollment toggle ── *@
+        <div class="mb-4 form-check">
+            @* InputCheckbox binds a bool property with two-way binding *@
+            <InputCheckbox id="enrolled" class="form-check-input" @bind-Value="_student.IsEnrolled" />
+            <label class="form-check-label" for="enrolled">Currently Enrolled</label>
+        </div>
+
+        @* ── Submit button ── *@
+        <div class="d-flex gap-2">
+            @* Conditional rendering: button label reflects the mode *@
+            <button type="submit" class="btn btn-primary">
+                @(_isEdit ? "Save Changes" : "Add Student")
+            </button>
+            <a href="/students" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </EditForm>
+
+    @* Conditional rendering: success banner appears after saving *@
+    @if (_saved)
+    {
+        <div class="alert alert-success mt-4">
+            ✅ Student @(_isEdit ? "updated" : "added") successfully!
+            <a href="/students" class="alert-link">Back to list</a>
+        </div>
+    }
+</div>
+
+@code {
+    // Optional URL parameter — present when editing, absent when adding
+    [Parameter]
+    public int? Id { get; set; }
+
+    // The model bound to the EditForm
+    private Student _student = new();
+
+    // True when editing an existing student; false when adding a new one
+    private bool _isEdit;
+
+    // Controls the success message visibility
+    private bool _saved;
+
+    // OnParametersSet runs once the URL parameters are resolved
+    protected override void OnParametersSet()
+    {
+        if (Id.HasValue)
+        {
+            // Edit mode: load the existing student from the service
+            var existing = StudentService.GetById(Id.Value);
+            if (existing is not null)
+            {
+                // Copy values into a new object so edits don't mutate
+                // the service's data until the user actually submits
+                _student = new Student
+                {
+                    Id          = existing.Id,
+                    FirstName   = existing.FirstName,
+                    LastName    = existing.LastName,
+                    Grade       = existing.Grade,
+                    Email       = existing.Email,
+                    IsEnrolled  = existing.IsEnrolled
+                };
+                _isEdit = true;
+            }
+        }
+        else
+        {
+            // Add mode: start with a blank student
+            _student = new Student();
+            _isEdit  = false;
+        }
+    }
+
+    // Called by EditForm's OnValidSubmit — only fires when validation passes
+    private void HandleSubmit()
+    {
+        if (_isEdit)
+            StudentService.Update(_student);
+        else
+            StudentService.Add(_student);
+
+        _saved = true;   // show success banner (conditional rendering)
+    }
+}
